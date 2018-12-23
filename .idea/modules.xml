@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/sweeper.iml" filepath="$PROJECT_DIR$/sweeper.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/sweeper-game/sweeper-game.iml" filepath="$PROJECT_DIR$/.idea/modules/sweeper-game/sweeper-game.iml" group="sweeper-game" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/sweeper-game/sweeper-game_main.iml" filepath="$PROJECT_DIR$/.idea/modules/sweeper-game/sweeper-game_main.iml" group="sweeper-game" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/sweeper-game/sweeper-game_test.iml" filepath="$PROJECT_DIR$/.idea/modules/sweeper-game/sweeper-game_test.iml" group="sweeper-game" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/sweeper-solver/sweeper-solver.iml" filepath="$PROJECT_DIR$/.idea/modules/sweeper-solver/sweeper-solver.iml" group="sweeper-solver" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/sweeper-solver/sweeper-solver_main.iml" filepath="$PROJECT_DIR$/.idea/modules/sweeper-solver/sweeper-solver_main.iml" group="sweeper-solver" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/sweeper-solver/sweeper-solver_test.iml" filepath="$PROJECT_DIR$/.idea/modules/sweeper-solver/sweeper-solver_test.iml" group="sweeper-solver" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/sweeper_main.iml" filepath="$PROJECT_DIR$/.idea/modules/sweeper_main.iml" group="sweeper" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/sweeper_test.iml" filepath="$PROJECT_DIR$/.idea/modules/sweeper_test.iml" group="sweeper" />
+    </modules>
+  </component>
+</project>

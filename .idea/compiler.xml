@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <bytecodeTargetLevel>
+      <module name="sweeper-game_main" target="1.8" />
+      <module name="sweeper-game_test" target="1.8" />
+      <module name="sweeper-solver_main" target="1.8" />
+      <module name="sweeper-solver_test" target="1.8" />
+      <module name="sweeper_main" target="1.8" />
+      <module name="sweeper_test" target="1.8" />
+    </bytecodeTargetLevel>
+  </component>
+</project>
