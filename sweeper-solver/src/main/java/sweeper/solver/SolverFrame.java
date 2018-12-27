@@ -66,7 +66,7 @@ public class SolverFrame extends JFrame implements ActionListener, Solver.CoordA
             }
         } else if (source == timer) {
             if (solving) {
-                lastStepLabel.setText(solver.step().getMessage() + " ход");
+                lastStepLabel.setText(solver.step().getMessage());
                 if (state.getState() != GameState.PLAYED) {
                     solved();
                 }
@@ -78,7 +78,6 @@ public class SolverFrame extends JFrame implements ActionListener, Solver.CoordA
         nextMoveButton.setEnabled(true);
         solving = false;
         solveButton.setText("Начать решение");
-        lastStepLabel.setText("Ожидание");
     }
 
     @Override

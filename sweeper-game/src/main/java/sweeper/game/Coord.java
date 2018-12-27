@@ -18,11 +18,23 @@ public class Coord {
     }
 
     @Override
+    public int hashCode() {
+        return ~x ^ y;
+    }
+
+    @Override
     public boolean equals(Object o){
+        if (o == this)
+            return true;
         if (o instanceof Coord){
             Coord to = (Coord)o;
             return to.x == x && to.y == y;
         }
-        return  super.equals(o);
+        return super.equals(o);
+    }
+
+    @Override
+    public String toString() {
+        return "(" + x + "|" + y + ")";
     }
 }

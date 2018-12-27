@@ -9,6 +9,11 @@ public class Bomb {
         bombMap = new Matrix(Box.ZERO);
     }
 
+    public Bomb(int totalBombs, Matrix bombs) {
+        this.totalBombs = totalBombs;
+        bombMap = bombs;
+    }
+
     void start (){
         for (int j = 0; j < totalBombs; j ++)
             placeBomb();
@@ -43,7 +48,7 @@ public class Bomb {
                 bombMap.set(around, bombMap.get(around).getNextNumberBox());
     }
 
-    int getTotalBombs() {
+    public int getTotalBombs() {
         return totalBombs;
     }
 }

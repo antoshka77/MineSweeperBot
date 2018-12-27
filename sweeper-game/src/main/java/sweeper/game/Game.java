@@ -5,10 +5,14 @@ public class Game {
     private Flag flag;
     private GameState state;
 
-
     Game(int cols, int rows, int bombs){
         Ranges.setSize(new Coord(cols, rows));
         bomb = new Bomb(bombs);
+        flag = new Flag();
+    }
+
+    public Game(Bomb bombs) {
+        bomb = bombs;
         flag = new Flag();
     }
 
@@ -16,6 +20,11 @@ public class Game {
        bomb.start();
        flag.start();
        state = GameState.PLAYED;
+    }
+
+    public void testStart() {
+        flag.start();
+        state = GameState.PLAYED;
     }
 
     Box getBox(Coord coord) {

@@ -8,7 +8,7 @@ public class Ranges {
     private static ArrayList<Coord> allCoords;
     private static Random randon = new Random();
 
-    static void setSize(Coord _size){
+    public static void setSize(Coord _size){
         size = _size;
         allCoords = new ArrayList<>();
         for (int y = 0; y < size.y; y++)
@@ -24,7 +24,7 @@ public class Ranges {
         return allCoords;
     }
 
-    public static boolean inRange (Coord coord){
+    static boolean inRange(Coord coord){
         return coord.x >= 0 && coord.x < size.x &&
                 coord.y >= 0 && coord.y < size.y;
     }

@@ -2,7 +2,10 @@ package sweeper.solver;
 
 import sweeper.game.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 class Solver {
     private Game state;
@@ -25,21 +28,151 @@ class Solver {
         flags = newstate.getFlag();
     }
 
-    MoveType step(){
+    private List<MinesGroup> genGroups() {
+        List<MinesGroup> groups = new ArrayList<>();
+        for (Coord coord : Ranges.getAllCoords()) {
+            if (flags.get(coord) == Box.OPENED) {
+                int number = bombs.bombsN(coord) - countCellsAround(coord);
+                if (number == 0) continue;
+                MinesGroup group = new MinesGroup(number);
+                Set<Coord> coords = group.group;
+                for (Coord around : Ranges.getCoordsAround(coord)) {
+                    if (flags.get(around) == Box.CLOSED) {
+                        coords.add(around);
+                    }
+                }
+                groups.add(group);
+            }
+        }
+        boolean changes;
+        do {
+            changes = false;
+            for (int i = 0; i < groups.size(); i++) {
+                MinesGroup groupI = groups.get(i);
+                for (int j = i + 1; j < groups.size(); j++) {
+                    MinesGroup groupJ = groups.get(j);
+                    // Если группы одинаковые, то вторую удаляем
+                    if (groupI.equals(groupJ)) {
+                        groups.remove(j--);
+                        continue;
+                    }
+                    MinesGroup parent;
+                    MinesGroup child;
+                    if (groupI.group.size() > groupJ.group.size()) {
+                        parent = groupI;
+                        child = groupJ;
+                    } else {
+                        parent = groupJ;
+                        child = groupI;
+                    }
+                    // Если одна группа содержит другую, то вычитаем из большей меньшую
+                    if (parent.contains(child)) {
+                        parent.minusAssign(child);
+                        changes = true;
+                    }
+                    // Пересекающиеся группы будут устранены автоматически
+                }
+            }
+            // Повторяем до тех пор, пока не будет производиться никаких изменений
+        } while (changes);
+        return groups;
+    }
+
+    private boolean logicalMove(List<MinesGroup> groups) {
+        for (MinesGroup group : groups) {
+            if (group.minesAround == 0) {
+                // Количество мин равно нулю
+                openBox(group.group.iterator().next());
+                return true;
+            } else if (group.minesAround == group.group.size()) {
+                // Количество мин равно количеству ячеек в группе
+                flagBox(group.group.iterator().next());
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static final double PROB_E = 0.0001;
+
+    private boolean probabilityMove(List<MinesGroup> groups) {
+        Coord size = Ranges.getSize();
+        double[][] grid = new double[size.getX()][size.getY()];
+        int countBombs = 0;
+        // Нахождение вероятностей для каждой клетки с возможной миной
+        for (MinesGroup group : groups) {
+            for (Coord coord : group) {
+                double prob = ((double) group.minesAround) / group.group.size();
+                double old = grid[coord.getX()][coord.getY()];
+                grid[coord.getX()][coord.getY()] = 1.0 - (1.0 - old) * (1.0 - prob);
+            }
+            countBombs += group.minesAround;
+        }
+        // Все остальные клетки также имеют вероятность содержания бомбы равную остаточному количеству бомб
+        // поделённому на количество закрытых ячеек, не принадлежащих ни одной группе.
+        int countClosedReminder = 0;
+        for (Coord coord : Ranges.getAllCoords()) {
+            // сначала сосчитаем такие ячейки
+            if (flags.get(coord) == Box.CLOSED && grid[coord.getX()][coord.getY()] == 0.0)
+                countClosedReminder++;
+        }
+        final int countBombsReminder = bombs.getTotalBombs() - countBombs;
+        for (Coord coord : Ranges.getAllCoords()) {
+            // теперь определим их вероятнности
+            if (flags.get(coord) == Box.CLOSED && grid[coord.getX()][coord.getY()] == 0.0)
+                grid[coord.getX()][coord.getY()] = ((double) countBombsReminder) / countClosedReminder;
+        }
+        // Пошаговое приближение вероятностей до заданной погрешности
+        double delta;
+        do {
+            delta = 0.0;
+            for (MinesGroup group : groups) {
+                double actualSum = 0.0;
+                for (Coord coord : group)
+                    actualSum += grid[coord.getX()][coord.getY()];
+                final double correction = group.minesAround / actualSum;
+                final double newDelta = Math.abs(actualSum - group.minesAround);
+                if (newDelta > delta) {
+                    delta = newDelta;
+                }
+                for (Coord coord : group)
+                    grid[coord.getX()][coord.getY()] = grid[coord.getX()][coord.getY()] * correction;
+            }
+        } while (delta > PROB_E);
+        // Выбор лучшего варианта
+        double bestProb = 2.0;
+        Coord bestCoord = null;
+        for (Coord coord : Ranges.getAllCoords()) {
+            double prob = grid[coord.getX()][coord.getY()];
+            if (flags.get(coord) == Box.CLOSED && prob < bestProb) {
+                bestProb = prob;
+                bestCoord = coord;
+            }
+        }
+        if (bestCoord == null)
+            return false;
+        openBox(bestCoord);
+        return true;
+    }
+
+    MoveType step() {
         if (state.getState() != GameState.PLAYED)
             return MoveType.NoStep;
         Coord size = Ranges.getSize();
         if (flags.getCountOfClosedBoxes() == size.getX() * size.getY()){
+            // Первый ход
             openBox(Ranges.getRandomCoord());
             return MoveType.First;
-        } else if (logicalMove())
-            return MoveType.Logical;
-        else if (probabilityMove())
-            return MoveType.Probability;
-        else {
-            randomMove();
-            return MoveType.Random;
         }
+        List<MinesGroup> groups = genGroups();
+        if (logicalMove(groups)) {
+            // Логический ход
+            return MoveType.Logical;
+        } else if (probabilityMove(groups))
+            // Вероятностный ход
+            return MoveType.Probability;
+        randomMove();
+        return MoveType.Random;
     }
 
     private void openBox(Coord coord){
@@ -52,108 +185,15 @@ class Solver {
         state.pressRightButton(coord);
     }
 
-    private int countCellsAround(Coord coord, Box type){
+    private int countCellsAround(Coord coord){
         int n = 0;
         for (Coord place : Ranges.getCoordsAround(coord)){
-            if (flags.get(place) == type)
+            if (flags.get(place) == Box.FLAGED)
                 n++;
         }
         return n;
     }
 
-    private void cellAroundFromClosedToFlagged(Coord coord){
-        Optional<Coord> around = Ranges.getCoordsAround(coord)
-                .stream()
-                .filter(it -> flags.get(it) == Box.CLOSED)
-                .findFirst();
-        around.ifPresent(this::flagBox);
-    }
-
-    private boolean logicalMove(){
-        for (Coord coord : Ranges.getAllCoords()){
-            Box status = flags.get(coord);
-            if (status == Box.CLOSED) continue;
-            int number = bombs.bombsN(coord);
-            if (number == 0) continue;
-            int countClosedCellsAround = countCellsAround(coord, Box.CLOSED);
-            int countFlaggedCellsAround = countCellsAround(coord, Box.FLAGED);
-            if (countClosedCellsAround + countFlaggedCellsAround == number && countClosedCellsAround != 0){
-                cellAroundFromClosedToFlagged(coord);
-                return true;
-            }
-            if (number - countFlaggedCellsAround == 0)
-                for (Coord place : Ranges.getCoordsAround(coord))
-                    if (flags.get(place) == Box.CLOSED){
-                        openBox(coord);
-                        return true;
-                    }
-        }
-        return false;
-    }
-
-    private static double fullProbability(double[] field, int k){
-        int segment = 1;
-        while (segment != k){
-            if (field[segment] == 0) return field[0];
-            field[0] = (field[0] + field[segment]) / 2;
-            segment++;
-        }
-        return field[0];
-    }
-
-    private boolean probabilityMove(){
-        int bestX = 0;
-        int bestY = 0;
-        double bestProbability = 1;
-        int flag = 0;
-        int closed = 0;
-        Coord size = Ranges.getSize();
-        double[][][] field = new double[size.getX()][size.getY()][8];
-        for (Coord coord : Ranges.getAllCoords()){
-            Box status = flags.get(coord);
-            if (status == Box.CLOSED){
-                closed++;
-                continue;
-            }
-            if (status == Box.FLAGED){
-                flag++;
-                continue;
-            }
-            int number = bombs.bombsN(coord);
-            if (number == 0) continue;
-            int flaggedCellsAroundN = countCellsAround(coord, Box.FLAGED);
-            if (flaggedCellsAroundN != 0 && number != flaggedCellsAroundN){
-                double probabilityMove = ((double) (number - flaggedCellsAroundN)) / flaggedCellsAroundN;
-                for (Coord around : Ranges.getCoordsAround(coord)){
-                    Box aroundStatus = flags.get(around);
-                    if (aroundStatus == Box.CLOSED){
-                        int segment = 0;
-                        while (field[around.getX()][around.getY()][segment] != 0.0)
-                            segment++;
-                        field[around.getX()][around.getY()][segment] = probabilityMove;
-                    }
-                }
-            }
-        }
-        for (Coord coord : Ranges.getAllCoords()){
-            int x = coord.getX();
-            int y = coord.getY();
-            if (field[x][y][0] == 0) continue;
-            int segment = 0;
-            while (field[x][y][segment] != 0)
-                segment++;
-            double fullProbability = fullProbability(field[x][y],segment - 1);
-            if (fullProbability < bestProbability){
-                bestProbability = fullProbability;
-                bestX = x;
-                bestY = y;
-            }
-        }
-        if (bestProbability > (8 - flag) / closed)
-            return false;
-        openBox(new Coord(bestX, bestY));
-        return true;
-    }
 
     private void randomMove(){
         Optional<Coord> move = Ranges.getAllCoords()
