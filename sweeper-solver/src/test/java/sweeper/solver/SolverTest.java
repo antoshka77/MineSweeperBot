@@ -6,7 +6,6 @@ import sweeper.game.*;
 import static org.junit.Assert.assertEquals;
 
 public class SolverTest {
-
     @Test
     public void logicalMove() {
         Ranges.setSize(new Coord(5, 5));

@@ -11,7 +11,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class SolverFrame extends JFrame implements ActionListener, Solver.CoordAction {
-
     private Main gameWindow;
     private JButton nextMoveButton;
     private JButton solveButton;

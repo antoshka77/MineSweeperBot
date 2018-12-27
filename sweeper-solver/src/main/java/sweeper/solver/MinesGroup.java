@@ -9,6 +9,7 @@ import java.util.Spliterator;
 import java.util.function.Consumer;
 
 public class MinesGroup implements Iterable<Coord> {
+
     int minesAround;
     Set<Coord> group;
 

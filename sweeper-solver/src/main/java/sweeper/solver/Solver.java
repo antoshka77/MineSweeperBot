@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.Set;
 
 class Solver {
+
     private Game state;
     private Bomb bombs;
     private Flag flags;
